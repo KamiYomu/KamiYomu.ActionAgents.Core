@@ -24,7 +24,7 @@ jobs:
       DOTNET_VERSION: '8.0.x'
       SOLUTION_PATH: './src/KamiYomu.ActionAgents.Core.sln'
       PROJECT_PATH: './src/KamiYomu.ActionAgents.Core/KamiYomu.ActionAgents.Core.csproj'
-      TEST_PROJECT_PATH: './tests/KamiYomu.ActionAgents.Core.Tests/KamiYomu.ActionAgents.Core.Tests.csproj'
+      TEST_PROJECT_PATH: './src/KamiYomu.ActionAgents.Core.Tests/KamiYomu.ActionAgents.Core.Tests.csproj'
       NUGET_CONFIG_PATH: './src/NuGet.config'
 
     steps:
