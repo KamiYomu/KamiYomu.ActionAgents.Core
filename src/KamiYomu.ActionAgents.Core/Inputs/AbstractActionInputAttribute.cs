@@ -33,7 +33,7 @@ public abstract class AbstractActionInputAttribute : Attribute
         : this(name, legend)
     {
         Required = required;
-        DefaultValue = defaultValue; 
+        DefaultValue = defaultValue;
         Order = 0;
     }
 
@@ -72,5 +72,8 @@ public abstract class AbstractActionInputAttribute : Attribute
     public bool Required { get; protected set; } = false;
 
     /// <inheritdoc/>
-    public override string ToString() => $"Order={Order} | Name=\"{Name}\" | Legend=\"{Legend}\" | Required={Required} | Type=\"{this.GetType().Name}\"";
+    public override string ToString()
+    {
+        return $"Order={Order} | Name=\"{Name}\" | Legend=\"{Legend}\" | Required={Required} | Type=\"{GetType().Name}\"";
+    }
 }
