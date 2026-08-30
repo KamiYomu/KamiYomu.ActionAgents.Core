@@ -1,9 +1,9 @@
 namespace KamiYomu.ActionAgents.Core.Inputs;
 
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
-public class TutorialDisplayLogoAttribute : Attribute
+public class ActionTutorialAttribute : Attribute
 {
-    public TutorialDisplayLogoAttribute(params string[] steps)
+    public ActionTutorialAttribute(params string[] steps)
     {
         if (steps == null || steps.Length == 0)
         {
