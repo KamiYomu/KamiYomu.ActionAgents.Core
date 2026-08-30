@@ -1,157 +1,579 @@
-# KamiYomu.ActionAgents.Core
+﻿# KamiYomu.ActionAgents.Core
 
-A event-driven action system for KamiYomu that enables extensible automation through triggered actions at key application moments.
+A robust, event-driven action system for KamiYomu that enables extensible automation through triggered actions at key application moments.
 
 ## Overview
 
-**Actions** are events triggered by KamiYomu at specific moments during application execution. They represent discrete operations that can be executed automatically in response to significant events, such as:
+**Actions** are discrete operations triggered by KamiYomu at significant moments during application execution. They enable you to:
 
-- **Manga Downloads**: Actions triggered when a manga series is downloaded
-- **Chapter Downloads**: Actions triggered when a chapter is successfully downloaded
-- **Chained Actions**: Actions triggered by the completion of other actions, enabling complex workflows
-
-## Purpose
-
-The `KamiYomu.ActionAgents.Core` library provides a robust framework for:
-
-- Defining custom actions that respond to application events
-- Managing action execution and lifecycle
-- Creating extensible automation pipelines
-- Decoupling business logic from event handling
-
-## Key Concepts
-
-### Actions
-
-Actions are the core building blocks of this framework. An action encapsulates a specific operation that should execute when triggered by an event. Actions can be:
-
-- **Simple**: Perform a single operation (e.g., send a notification)
-- **Complex**: Orchestrate multiple steps or delegate to other services
-- **Chainable**: Trigger subsequent actions upon completion
+- ✅ Automate tasks in response to system events
+- ✅ Create extensible workflows without modifying core code
+- ✅ Chain multiple actions together for complex automation
+- ✅ Respond to manga and chapter lifecycle events
+- ✅ Build custom integrations and notifications
 
 ### Event Triggers
 
-The framework monitors KamiYomu's lifecycle for significant events:
+Actions can be triggered from various sources throughout the KamiYomu lifecycle:
 
-- Manga download completion
-- Chapter download completion
-- Custom application events
-- Action completion events
+| Trigger | Description |
+|---------|-------------|
+| **Manual** | User-initiated action execution |
+| **Chained** | Triggered by the completion of another action |
+| **Manga Download** | When a manga series is successfully downloaded |
+| **Chapter Discovery** | When new chapters are discovered for a series |
+| **Chapter Download** | When a chapter is successfully downloaded |
+| **Chapter Page Read** | When a user reads a chapter page |
+| **None** | Unspecified or unknown trigger (fallback) |
+## Architecture
 
-### Extensibility
+The `KamiYomu.ActionAgents.Core` library provides a lightweight, extensible framework for:
 
-Design your actions to be:
+- ✅ Defining custom actions that respond to application events
+- ✅ Managing action execution and lifecycle
+- ✅ Creating complex automation pipelines
+- ✅ Decoupling business logic from event handling
 
-- **Configurable**: Accept parameters that customize behavior
-- **Composable**: Work together to form larger workflows
-- **Testable**: Isolated and mockable for unit testing
+### Core Interfaces
 
-## Getting Started
+- **`IActionAgent`**: The main interface your action must implement
+- **`AbstractActionAgent`**: Base class with common functionality (logging, options, versioning)
+- **`ActionAgentContext`**: Provides access to manga, chapter, and trigger source information
 
-Quick start
------------
-1. Create a class library project (target `net-8.0` for widest compatibility):
-    
-    Create project:
-    
-        dotnet new classlib -n [DeveloperName].ActionAgent.[ProductName] -f net-8.0
+---
 
-2. Add NuGet.Config in the solution folder to ensure standard feeds:
+## Creating Your First Action Agent
 
-    NuGet.Config content (place next to your `.sln`):
-    
-        <?xml version="1.0" encoding="utf-8"?>
-        <configuration>
-          <packageSources>
-            <clear />
-            <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-          </packageSources>
-        </configuration>
+### Step 1: Create the Project
 
-3. Install the core package:
+Create a new class library targeting .NET 8.0:
 
-        dotnet add package KamiYomu.ActionAgents.Core
+```bash
+dotnet new classlib -n [DeveloperName].ActionAgents.[ProductName] -f net8.0
+cd [DeveloperName].ActionAgents.[ProductName]
+```
 
-4. Make your package discoverable by KamiYomu (add `PackageTags` to your `.csproj`):
+### Step 2: Add the Core Package
 
-    Add inside your `.csproj`:
+Install the KamiYomu.ActionAgents.Core NuGet package:
 
-        <PropertyGroup>
-		    <PackageTags>kamiyomu;kamiyomu-action-agents;actions;[ProductName];</PackageTags>
-        </PropertyGroup>
+```bash
+dotnet add package KamiYomu.ActionAgents.Core
+```
 
-5. Implement your agent
-    - Create a class that implements `IActionAgent` from the `KamiYomu.ActionAgents.Core` namespace.
-    - Implement required lifecycle methods (ExecuteAsync). The interface defines how KamiYomu will call your agent.
+### Step 3: Create Your Action Agent
+
+Create a new file (e.g., `MyFirstActionAgent.cs`) with a class implementing `IActionAgent`:
+
+```csharp
+using KamiYomu.ActionAgents.Core;
+using KamiYomu.ActionAgents.Core.Contexts;
+using Microsoft.Extensions.Logging;
+
+namespace YourName.ActionAgents.MyAction;
+
+public class MyFirstActionAgent : AbstractActionAgent, IActionAgent
+{
+	public MyFirstActionAgent(IDictionary<string, object> options) : base(options)
+	{
+	}
+
+	public async Task ExecuteAsync(
+		ActionAgentContext context,
+		IDictionary<string, object> options,
+		CancellationToken cancellationToken)
+	{
+		// Receive context information
+		var mangaTitle = context.Manga?.Title ?? "Unknown Manga";
+		var chapterNumber = context.Chapter?.Number ?? "Unknown Chapter";
+		var triggerSource = context.TriggerContext?.Source.ToString() ?? "Unknown";
+
+		Logger?.LogInformation($"Action triggered for {mangaTitle}, Chapter {chapterNumber}");
+		Logger?.LogInformation($"Triggered by: {triggerSource}");
+
+		// Perform your action here
+		await Task.Delay(100, cancellationToken);
+
+		Logger?.LogInformation("Action completed successfully!");
+	}
+}
+```
+
+### Step 4: Configure Package Metadata
+
+Update your `.csproj` file to make the package discoverable by KamiYomu:
+
+```xml
+<PropertyGroup>
+	<PackageTags>kamiyomu;kamiyomu-action-agents;actions;MyAction;</PackageTags>
+</PropertyGroup>
+
+<!-- Optional: Auto-generate NuGet package on Debug builds -->
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+</PropertyGroup>
+```
+
+### Step 5: Build and Test
+
+```bash
+dotnet build
+```
+
+---
 
 
-Packaging and publishing
-------------------------
-- Build a distributable package:
+## Working with Action Context
 
-        dotnet pack -c Release
+The `ActionAgentContext` provides access to relevant information when your action is triggered:
 
-- To automatically generate a NuGet package for Debug builds, add to your `.csproj`:
+### Manga Context
+```csharp
+var mangaTitle = context.Manga?.Title;
+var mangaUrl = context.Manga?.Url;
+var mangaDescription = context.Manga?.Description;
+```
 
-        <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-            <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-        </PropertyGroup>
+### Chapter Context
+```csharp
+var chapterNumber = context.Chapter?.Number;
+var chapterUrl = context.Chapter?.URL;
+var chapterReleaseDateUtc = context.Chapter?.ReleaseDateUtc;
+```
 
-- Publish to a feed accessible by KamiYomu.Web (Nuget.org, GitHub Packages, Azure Artifacts, private feed, or local folder).
-- To test without a feed, upload the generated `.nupkg` directly into KamiYomu.Web.
+### Trigger Context
+```csharp
+var triggerSource = context.TriggerContext?.Source; // See Action Triggers table above
+var triggeredAtUtc = context.TriggerContext?.TriggeredAtUtc;
+```
 
-Debugging an installed agent
-----------------------------
-- Place the `.pdb` alongside the agent DLL inside the agent folder (e.g. `/AppData/agents/{your.package}/lib/net8.0/`) to enable source-level debugging when running inside KamiYomu.Web.
+---
 
-Packaging notes
----------------
-- Ensure your package includes necessary runtime assets and dependencies.
-- Keep the public API surface minimal and document required configuration and permissions.
 
-Commands summary
-----------------
-- Create project:
-    
-        dotnet new classlib -n [DeveloperName].ActionAgent.[ProductName] -f net8.0
+## Packaging and Publishing Your Action
 
-- Add package:
+### Building a Release Package
 
-        dotnet add package KamiYomu.ActionAgents.Core
-- Build Release package:
+```bash
+dotnet pack -c Release
+```
 
-        dotnet pack -c Release
+This generates a `.nupkg` file in the `bin/Release/` directory.
 
-- Enable package on Debug build:
+### Publishing Options
 
-        Add `<GeneratePackageOnBuild>True</GeneratePackageOnBuild>` under Debug condition in `.csproj`
+Choose one of the following distribution methods:
 
-Dependencies
-------------
-| Package         | Version |
-|-----------------|---------|
-| HtmlAgilityPack | 1.12.4  |
-| PuppeteerSharp  | 20.2.4  |
+#### 1. **NuGet.org** (Recommended for public actions)
+```bash
+dotnet nuget push bin/Release/YourName.ActionAgents.MyAction.*.nupkg \
+	--api-key YOUR_NUGET_API_KEY \
+	--source https://api.nuget.org/v3/index.json
+```
 
-Contributing
-------------
-- Follow repository coding conventions and include unit tests for new behavior.
-- Use the validator repo above to confirm compliance before publishing.
-- Open issues or pull requests against the core repository with clear descriptions and reproducible examples.
+#### 2. **GitHub Packages** (Good for organization-specific actions)
+```bash
+dotnet nuget push bin/Release/YourName.ActionAgents.MyAction.*.nupkg \
+	--api-key YOUR_GITHUB_TOKEN \
+	--source https://nuget.pkg.github.com/YourOrg/index.json
+```
 
-License
--------
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the `LICENSE` file for full terms.
+#### 3. **Azure Artifacts** (Enterprise deployments)
+- Configure your credentials in Visual Studio or NuGet.config
+- Push using the standard NuGet push command with your feed URL
 
-Support / Contact
------------------
-- Repo: https://github.com/KamiYomu/KamiYomu.CrawlerAgents.Core
-- For integration or runtime questions, open an issue on the repository.
+#### 4. **Local Folder** (Testing without a feed)
+- Place the `.nupkg` file directly in KamiYomu's agent folder
+- Useful for rapid development and testing
 
-Changelog
----------
-- See repository Releases for version-specific notes.
+### Configuration for Automatic Package Generation
 
-Copyright
----------
-Licensed under MIT.
+Add this to your `.csproj` to automatically generate a NuGet package on Debug builds:
+
+```xml
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+</PropertyGroup>
+```
+
+---
+
+## Debugging Your Action Agent
+
+### Local Debugging
+
+1. **Generate Debug Symbols**
+   - Build your project in Debug mode: `dotnet build`
+   - This creates `.pdb` files alongside your DLL
+
+2. **Place Symbols in KamiYomu**
+   - Copy the `.pdb` file to KamiYomu's agent folder:
+	 ```
+	 C:\Users\[YourUsername]\AppData\Local\KamiYomu\agents\[DeveloperName].ActionAgents.[ProductName]\lib\net8.0\
+	 ```
+
+3. **Enable Debugging in KamiYomu.Web**
+   - Attach to the running KamiYomu process using Visual Studio
+   - Set breakpoints in your action code
+   - KamiYomu will pause execution at your breakpoints with full source visibility
+
+### Logging Best Practices
+
+```csharp
+public async Task ExecuteAsync(
+	ActionAgentContext context,
+	IDictionary<string, object> options,
+	CancellationToken cancellationToken)
+{
+	try
+	{
+		Logger?.LogInformation("Starting action execution");
+		Logger?.LogDebug($"Manga: {context.Manga?.Title}");
+
+		// Your action logic here
+
+		Logger?.LogInformation("Action completed successfully");
+	}
+	catch (Exception ex)
+	{
+		Logger?.LogError(ex, "Action execution failed");
+		throw;
+	}
+}
+```
+
+---
+
+## Common Implementation Patterns
+
+
+## Common Implementation Patterns
+
+### Pattern 1: Sending Notifications
+
+```csharp
+public class NotificationActionAgent : AbstractActionAgent, IActionAgent
+{
+	public async Task ExecuteAsync(
+		ActionAgentContext context,
+		IDictionary<string, object> options,
+		CancellationToken cancellationToken)
+	{
+		var message = $"Chapter {context.Chapter?.Number} of {context.Manga?.Title} " +
+					 $"was downloaded at {context.TriggerContext?.TriggeredAtUtc:G}";
+
+		// Send notification (e.g., via webhook, email, Discord, etc.)
+		await SendNotificationAsync(message, cancellationToken);
+	}
+
+	private async Task SendNotificationAsync(string message, CancellationToken cancellationToken)
+	{
+		// Implementation here
+		await Task.CompletedTask;
+	}
+}
+```
+
+### Pattern 2: External API Integration
+
+```csharp
+public class WebhookActionAgent : AbstractActionAgent, IActionAgent
+{
+	private readonly HttpClient _httpClient;
+
+	public WebhookActionAgent(IDictionary<string, object> options) : base(options)
+	{
+		_httpClient = new HttpClient();
+	}
+
+	public async Task ExecuteAsync(
+		ActionAgentContext context,
+		IDictionary<string, object> options,
+		CancellationToken cancellationToken)
+	{
+		var payload = new
+		{
+			manga = context.Manga?.Title,
+			chapter = context.Chapter?.Number,
+			trigger = context.TriggerContext?.Source,
+			timestamp = context.TriggerContext?.TriggeredAtUtc
+		};
+
+		var content = new StringContent(
+			JsonSerializer.Serialize(payload),
+			Encoding.UTF8,
+			"application/json");
+
+		try
+		{
+			var response = await _httpClient.PostAsync(
+				"https://your-webhook-url.com/manga-action",
+				content,
+				cancellationToken);
+
+			if (response.IsSuccessStatusCode)
+			{
+				Logger?.LogInformation("Webhook sent successfully");
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger?.LogError(ex, "Failed to send webhook");
+			throw;
+		}
+	}
+}
+```
+
+### Pattern 3: Conditional Logic Based on Trigger Source
+
+```csharp
+public class ConditionalActionAgent : AbstractActionAgent, IActionAgent
+{
+	public async Task ExecuteAsync(
+		ActionAgentContext context,
+		IDictionary<string, object> options,
+		CancellationToken cancellationToken)
+	{
+		var triggerSource = context.TriggerContext?.Source;
+
+		switch (triggerSource)
+		{
+			case ActionTriggerSource.Manual:
+				await HandleManualTriggerAsync(context, cancellationToken);
+				break;
+			case ActionTriggerSource.ChapterDownloader:
+				await HandleChapterDownloadAsync(context, cancellationToken);
+				break;
+			case ActionTriggerSource.MangaDownloader:
+				await HandleMangaDownloadAsync(context, cancellationToken);
+				break;
+			default:
+				Logger?.LogWarning($"Unhandled trigger source: {triggerSource}");
+				break;
+		}
+	}
+
+	private async Task HandleManualTriggerAsync(ActionAgentContext context, CancellationToken ct)
+	{
+		Logger?.LogInformation("User manually triggered this action");
+		await Task.CompletedTask;
+	}
+
+	private async Task HandleChapterDownloadAsync(ActionAgentContext context, CancellationToken ct)
+	{
+		Logger?.LogInformation($"Chapter downloaded: {context.Chapter?.Number}");
+		await Task.CompletedTask;
+	}
+
+	private async Task HandleMangaDownloadAsync(ActionAgentContext context, CancellationToken ct)
+	{
+		Logger?.LogInformation($"Manga series downloaded: {context.Manga?.Title}");
+		await Task.CompletedTask;
+	}
+}
+```
+
+---
+
+## Quick Reference Commands
+
+### Development Workflow
+
+```bash
+# Create new action agent project
+dotnet new classlib -n [DeveloperName].ActionAgents.[ProductName] -f net8.0
+cd [DeveloperName].ActionAgents.[ProductName]
+
+# Add the core library
+dotnet add package KamiYomu.ActionAgents.Core
+
+# Create test project
+cd ..
+dotnet new xunit -n [DeveloperName].ActionAgents.[ProductName].Tests -f net8.0
+cd [DeveloperName].ActionAgents.[ProductName].Tests
+dotnet add package KamiYomu.ActionAgents.Core
+dotnet add package Moq
+dotnet add reference ../[DeveloperName].ActionAgents.[ProductName]/YourName.ActionAgents.MyAction.csproj
+```
+
+### Building and Testing
+
+```bash
+# Build the project
+dotnet build
+
+# Run unit tests
+dotnet test
+
+# Build release package
+dotnet pack -c Release
+
+# View package contents
+dotnet nuget locals all --list
+```
+
+### Publishing
+
+```bash
+# Publish to NuGet.org
+dotnet nuget push bin/Release/YourName.ActionAgents.MyAction.*.nupkg \
+	--api-key YOUR_API_KEY \
+	--source https://api.nuget.org/v3/index.json
+
+# Publish to GitHub Packages
+dotnet nuget push bin/Release/YourName.ActionAgents.MyAction.*.nupkg \
+	--api-key YOUR_GITHUB_TOKEN \
+	--source https://nuget.pkg.github.com/YourOrganization/index.json
+```
+
+
+## Troubleshooting
+
+### My action isn't being discovered by KamiYomu.Web
+
+**Checklist:**
+- ✅ Package name follows the pattern: `*.ActionAgents.*`
+- ✅ `PackageTags` in `.csproj` include both `kamiyomu` and `kamiyomu-action-agents`
+- ✅ Your class implements `IActionAgent` interface
+- ✅ The class has a public constructor accepting `IDictionary<string, object> options`
+- ✅ Package is installed in KamiYomu's agent folder
+- ✅ All dependencies are included in the package
+
+**Debug Steps:**
+```bash
+# Verify package contents
+unzip -l bin/Release/YourName.ActionAgents.MyAction.*.nupkg
+
+# Check that your class is public and accessible
+dotnet build --configuration Release --verbosity diagnostic
+```
+
+### Execution fails with "Type not found" error
+
+- ✅ Ensure all NuGet dependencies are listed in your `.csproj`
+- ✅ Verify .NET 8.0 target framework matches KamiYomu's runtime
+- ✅ Check that custom types are public and properly namespaced
+
+### Logging not appearing in KamiYomu
+
+- ✅ Verify you're calling `Logger?.LogInformation()` (with null-coalescing)
+- ✅ Ensure logger is passed in options with key `"KamiYomuILogger"`
+- ✅ Check KamiYomu's logging configuration level (may filter out Debug messages)
+
+### Tests are failing
+
+- ✅ Ensure test project also targets `net8.0`
+- ✅ Mock dependencies properly (e.g., `ILogger`, HTTP clients)
+- ✅ Use the provided `ActionAgentContextBuilder` for building test contexts
+- ✅ Handle `CancellationToken` properly in async tests
+
+### Action takes too long to execute
+
+- ✅ Implement proper async/await patterns
+- ✅ Avoid blocking operations (use `async Task` instead of `Task.Run()`)
+- ✅ Implement cancellation support via `CancellationToken`
+- ✅ Set reasonable timeout values for external calls
+
+```csharp
+// Good: Proper async pattern
+public async Task ExecuteAsync(
+	ActionAgentContext context,
+	IDictionary<string, object> options,
+	CancellationToken cancellationToken)
+{
+	using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+	cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+	try
+	{
+		await SomeLongOperationAsync(cts.Token);
+	}
+	catch (OperationCanceledException)
+	{
+		Logger?.LogWarning("Action execution was cancelled");
+	}
+}
+
+// Avoid: Blocking patterns
+// ❌ Task.Run(() => { /* blocking code */ }).Wait();
+// ❌ Task.Delay(1000).Wait();
+```
+
+---
+
+## API Reference
+
+### ActionAgentContext Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Manga` | `MangaContext` | Information about the manga being processed |
+| `Chapter` | `ChapterContext` | Information about the chapter being processed |
+| `TriggerContext` | `ActionTriggerContext` | Information about what triggered this action |
+
+### MangaContext Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Title` | `string` | The manga series title |
+| `URL` | `string` | The source URL of the manga |
+| `Description` | `string` | Manga description or synopsis |
+
+### ChapterContext Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Number` | `string` | Chapter number or identifier |
+| `URL` | `string` | The URL to the chapter |
+| `ReleaseDateUtc` | `DateTime?` | When the chapter was released (UTC) |
+
+### ActionTriggerContext Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Source` | `ActionTriggerSource` | What triggered this action (see table above) |
+| `TriggeredAtUtc` | `DateTime` | When the action was triggered (UTC) |
+
+---
+
+## Resources
+
+### Official Documentation
+- **Core Library Repository**: https://github.com/KamiYomu/KamiYomu.ActionAgents.Core
+- **Main KamiYomu Project**: https://github.com/KamiYomu/KamiYomu
+
+## Community
+
+Join the conversation and be part of the KamiYomu community:
+
+| Action | Link |
+| :--- | :--- |
+| **Following** | [![GitHub followers](https://img.shields.io/github/followers/kamiyomu)](https://github.com/orgs/KamiYomu/followers) |
+| **Discord** | [![Join the discord](https://img.shields.io/discord/1468597233032101942)](https://discord.gg/b9zwEEejsJ) |
+| **Sponsor** | [![GitHub Sponsors](https://img.shields.io/github/sponsors/kamiyomu?logo=github&label=Sponsor)](https://github.com/sponsors/kamiyomu) |
+| **Report** | [![GitHub issues](https://img.shields.io/github/issues/kamiyomu/KamiYomu.ActionAgents.Core?logo=github&label=Issues)](https://github.com/kamiyomu/KamiYomu.ActionAgents.Core/issues) |
+| **Contribute** | [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github)](https://github.com/KamiYomu/KamiYomu.ActionAgents.Core/pulls) |
+
+### Best Practices
+- Follow SOLID principles in your action design
+- Keep actions focused and single-responsibility
+- Document all configuration options
+- Add comprehensive error logging
+- Write unit tests for your actions
+- Use semantic versioning for your package
+
+---
+
+## License
+
+This project is licensed under the **MIT License** for the library code.
+
+See the `LICENSE` file in the repository for full terms.
+
+### Copyright
+
+© KamiYomu. Licensed under AGPL-3.0 for the KamiYomu project itself.
+
+The `KamiYomu.ActionAgents.Core` library is provided under the MIT License to enable community contributions and third-party action development.
+
