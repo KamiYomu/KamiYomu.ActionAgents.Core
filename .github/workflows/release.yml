@@ -84,7 +84,7 @@ jobs:
               -p:Version="${{ env.VERSION }}"
 
       - name: Test
-        run: dotnet test ${{ env.TEST_PROJECT_PATH }} --configuration Release
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release
 
       - name: Pack
         run: |
