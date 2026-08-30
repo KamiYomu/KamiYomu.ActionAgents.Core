@@ -14,7 +14,7 @@
         <PackageProjectUrl>https://github.com/KamiYomu/KamiYomu.ActionAgents.Core</PackageProjectUrl>
         <RepositoryUrl>https://github.com/KamiYomu/KamiYomu.ActionAgents.Core</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>kamiyomu;kamiyomu-action-core;manga-download</PackageTags>
+        <PackageTags>kamiyomu;kamiyomu-action-core;action-system</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Copyright>Copyright © KamiYomu. All rights reserved.</Copyright>
         <PackageIcon>logo.png</PackageIcon>
